@@ -1,0 +1,16 @@
+.env
+.env.*
+!.env.example
+db.sqlite3
+__pycache__/
+*.pyc
+*.pyo
+.git/
+.git_old/
+.pytest_cache/
+staticfiles/
+node_modules/
+dist/
+.DS_Store
+Thumbs.db
+*.log

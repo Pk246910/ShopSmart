@@ -12,28 +12,40 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 import os
+from datetime import timedelta
 from dotenv import load_dotenv
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(BASE_DIR/".env")
+
+load_dotenv(BASE_DIR / ".env")
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
+
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-wm%=f!+@g13oic7e6=-l_h)7sf!dv9t%$rt8c=_yz$#!!q_*#l'
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
+if not SECRET_KEY:
+    raise ValueError("DJANGO_SECRET_KEY environment variable is required")
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DJANGO_DEBUG", "False").lower() in ("1", "true", "yes")
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    h.strip() for h in os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()
+]
 
 
+# -------------------------------------------------------------------
 # Application definition
+# -------------------------------------------------------------------
 
 INSTALLED_APPS = [
+    # Django core apps...
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -41,12 +53,28 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    # Third-party apps
     'rest_framework',
+    'rest_framework_simplejwt',
+    'django_filters',
+    'corsheaders',
+
+    # Local apps
+    'products',
     'users',
 ]
 
+
+# -------------------------------------------------------------------
+# Middleware
+# -------------------------------------------------------------------
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+
+    # CORS middleware should be placed near the top
+    'corsheaders.middleware.CorsMiddleware',
+
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -55,7 +83,17 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+
+# -------------------------------------------------------------------
+# URL configuration
+# -------------------------------------------------------------------
+
 ROOT_URLCONF = 'config.urls'
+
+
+# -------------------------------------------------------------------
+# Templates
+# -------------------------------------------------------------------
 
 TEMPLATES = [
     {
@@ -72,26 +110,41 @@ TEMPLATES = [
     },
 ]
 
+
 WSGI_APPLICATION = 'config.wsgi.application'
 
 
+# -------------------------------------------------------------------
 # Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
+# -------------------------------------------------------------------
+# Professional setup: PostgreSQL when DB_* env vars are present (prod),
+# SQLite fallback for local dev / CI so `manage.py check` never crashes.
+# -------------------------------------------------------------------
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST'),
-        'PORT': os.getenv('DB_PORT'),
+if os.getenv("DB_NAME") and os.getenv("DB_USER"):
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.getenv("DB_NAME"),
+            "USER": os.getenv("DB_USER"),
+            "PASSWORD": os.getenv("DB_PASSWORD", ""),
+            "HOST": os.getenv("DB_HOST", "localhost"),
+            "PORT": os.getenv("DB_PORT", "5432"),
+            "CONN_MAX_AGE": 60,
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 
+# -------------------------------------------------------------------
 # Password validation
-# https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
+# -------------------------------------------------------------------
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -109,19 +162,136 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
+# -------------------------------------------------------------------
 # Internationalization
-# https://docs.djangoproject.com/en/6.0/topics/i18n/
+# -------------------------------------------------------------------
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kolkata'
 
 USE_I18N = True
 
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
+# -------------------------------------------------------------------
+# Security settings (production)
+# -------------------------------------------------------------------
+
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = "DENY"
+DATA_UPLOAD_MAX_MEMORY_SIZE = 1048576  # 1MB
+
+# -------------------------------------------------------------------
+# Static files
+# -------------------------------------------------------------------
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# WhiteNoise (prod static serving) is optional locally: enabled only if installed.
+# Docker image installs it via requirements.txt.
+try:
+    import whitenoise  # noqa: F401
+    MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
+    STORAGES = {
+        "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+    }
+except ImportError:
+    pass
+
+
+# -------------------------------------------------------------------
+# Django REST Framework + JWT
+# -------------------------------------------------------------------
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.AllowAny',
+    ),
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '30/minute',
+        'user': '60/minute',
+        'login': '5/minute',
+        'register': '3/minute',
+        'change_password': '5/minute',
+        'forgot_password': '5/hour',
+        'ai_chat': '10/minute',
+    },
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 24,
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=3),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
+# -------------------------------------------------------------------
+# CORS configuration
+# -------------------------------------------------------------------
+
+CORS_ALLOWED_ORIGINS = [
+    o.strip()
+    for o in os.getenv(
+        "CORS_ALLOWED_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173",
+    ).split(",")
+    if o.strip()
+]
+
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'x-guest-id',
+]
+CORS_EXPOSE_HEADERS = ['Content-Type', 'X-Guest-ID']
+
+
+# -------------------------------------------------------------------
+# Logging (professional default: console, INFO in dev, WARNING in prod)
+# -------------------------------------------------------------------
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "default": {"format": "[{levelname}] {asctime} {name}: {message}", "style": "{"},
+    },
+    "handlers": {
+        "console": {"class": "logging.StreamHandler", "formatter": "default"},
+    },
+    "root": {"handlers": ["console"], "level": os.getenv("LOG_LEVEL", "INFO")},
+}
