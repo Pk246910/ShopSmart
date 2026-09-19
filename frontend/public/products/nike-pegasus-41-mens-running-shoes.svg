@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 350" width="400" height="350">
+  <defs>
+    <linearGradient id="bg_Footwear" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#1e293b;stop-opacity:1"/>
+    </linearGradient>
+    <linearGradient id="glow_Footwear" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f59e0b;stop-opacity:0.08"/>
+      <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:0.02"/>
+    </linearGradient>
+    <filter id="shadow_Footwear">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#f59e0b" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="350" rx="12" fill="url(#bg_Footwear)"/>
+  <rect width="400" height="350" rx="12" fill="url(#glow_Footwear)"/>
+
+  <!-- Subtle grid pattern -->
+  <g opacity="0.03" stroke="#f59e0b" stroke-width="0.5">
+    <line x1="0" y1="50" x2="400" y2="50"/><line x1="0" y1="100" x2="400" y2="100"/>
+    <line x1="0" y1="150" x2="400" y2="150"/><line x1="0" y1="200" x2="400" y2="200"/>
+    <line x1="0" y1="250" x2="400" y2="250"/><line x1="0" y1="300" x2="400" y2="300"/>
+    <line x1="50" y1="0" x2="50" y2="350"/><line x1="100" y1="0" x2="100" y2="350"/>
+    <line x1="150" y1="0" x2="150" y2="350"/><line x1="200" y1="0" x2="200" y2="350"/>
+    <line x1="250" y1="0" x2="250" y2="350"/><line x1="300" y1="0" x2="300" y2="350"/>
+    <line x1="350" y1="0" x2="350" y2="350"/>
+  </g>
+
+  <!-- Category icon -->
+  <g filter="url(#shadow_Footwear)">
+    <path d="M110 200 Q110 170 140 160 L260 155 Q290 153 295 170 L300 195 Q302 210 290 215 L120 220 Q110 220 110 200Z" fill="#f59e0b" opacity="0.15" stroke="#f59e0b" stroke-width="3"/>
+      <path d="M140 160 L140 140 Q145 125 160 125 L170 125" fill="none" stroke="#f59e0b" stroke-width="2" opacity="0.4"/>
+      <circle cx="250" cy="185" r="15" fill="none" stroke="#f59e0b" stroke-width="2" opacity="0.3"/>
+  </g>
+
+  <!-- Brand name -->
+  <text x="200" y="50" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="700" fill="#f59e0b" letter-spacing="3" opacity="0.9">NIKE</text>
+
+  <!-- Product name -->
+  <text x="200" y="300" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="500" fill="#94a3b8" opacity="0.8">Nike Pegasus 41 Men's</text>
+
+  <!-- Category badge -->
+  <rect x="200" y="318" x="-60" width="120" height="20" rx="10" fill="#f59e0b" opacity="0.1" transform="translate(140, 318)"/>
+  <text x="200" y="332" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="600" fill="#f59e0b" opacity="0.7">FOOTWEAR</text>
+
+  <!-- ShopSmart branding -->
+  <text x="200" y="22" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="8" font-weight="400" fill="#475569" opacity="0.4">SHOPSMART</text>
+</svg>

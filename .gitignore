@@ -17,6 +17,7 @@ staticfiles/
 # Environment variables and secrets
 .env
 .env.*
+!.env.example
 
 # Node / React
 node_modules/
@@ -33,3 +34,27 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+
+# Old nested Git metadata
+.git_old/
+
+# Obsolete/debug scripts not part of the final application
+backend/list_products.py
+backend/check_score.py
+backend/check_admin_products.py
+backend/fetch_images_v2.py
+backend/fetch_images_v3.py
+backend/fix_bad_images.py
+backend/fix_bad_images_final.py
+backend/fix_images_gemini.py
+
+# Obsolete AI runtime files
+backend/products/services/ai_providers/
+backend/products/services/gemini_service.py
+
+# Unused frontend component
+frontend/src/components/PriceHistoryModal.jsx
+
+# Old document-generation scripts
+docs/generate_doc.py
+docs/generate_doc2.py

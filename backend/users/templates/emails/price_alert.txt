@@ -1,0 +1,14 @@
+Hello {{ user_name }},
+
+Your ShopSmart price alert has been triggered.
+
+Product: {{ product_title }}
+Platform: {{ platform }}
+Target Price: ₹{{ target_price }}
+Current Price: ₹{{ current_price }}
+
+Your target price has been reached.
+
+{% if product_url %}View Product: {{ product_url }}{% endif %}
+
+Thank you for using ShopSmart.
