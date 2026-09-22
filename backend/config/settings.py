@@ -27,9 +27,9 @@ load_dotenv(BASE_DIR / ".env")
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
-if not SECRET_KEY:
-    raise ValueError("DJANGO_SECRET_KEY environment variable is required")
+# A dev fallback prevents build-time crashes in CI or Vercel previews when
+# a real secret has not yet been configured. Set DJANGO_SECRET_KEY in production.
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-insecure-key")
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
